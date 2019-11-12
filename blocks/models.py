@@ -13,4 +13,7 @@ class GenesisBlock(models.Model):
 
 
 class Block(models.Model):
-    pass
+    block_hash = models.CharField(blank=True, max_length=150)
+    difficulty = models.SmallIntegerField(null=True)
+    # TODO falta todos los campos, el nodo utiliza latest()
+
