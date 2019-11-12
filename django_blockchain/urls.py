@@ -16,6 +16,24 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path
 
+from node import views as node_views
+
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('/'),
+    # path('/debug'),
+    path('/debug/reset-chain', node_views.reset_chain, name='reset_chain'),
+    # path('/blocks'),
+    # path('/blocks/index'),
+    # path('/transactions/pending'),
+    # path('/transactions/confirmed'),
+    # path('/transactions/tran_hash'),
+    # path('/balances'),
+    # path('/address/address/balance'),
+    # path('/transactions/send'),
+    # path('/peers/'),
+    # path('/peers/connect/'),
+    # path('peers/notify-new-block'),
+    # path('/mining/get-mining-job/address'),
+    # path('/mining/submit-mined-block')
 ]

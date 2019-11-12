@@ -7,12 +7,29 @@ from merkletools import MerkleTools
 from datetime import datetime
 
 from transactions.models import Transaction
-from blocks.models import Block
+from blocks.models import Block, GenesisBlock
 from node.models import Node
 
 
-def add_transaction(request):
-    # Adds a transaction to the memepool
+def reset_chain(request):
+    # Resets the chain to the Genesis block. Erases all the transactions.
+    genesis_block, created = GenesisBlock.objects.get_or_create(
+        index=0,
+        difficulty=0,
+        mined_by="000000000000000000000000000",
+        nonce=0,
+        date_created=datetime.today().isoformat()
+    )
+
+    all_transactions = Transaction.objects.all()
+    for transaction in all_transactions:
+        transaction.delete()
+
+    return
+
+
+def add_transaction_mempool(request):
+    # Adds a transaction to the mempool
     transaction = json.loads(request.POST.get('transaction_json'))
     public_key_string = transaction['public_key']
     transaction_hash = transaction['transaction_hash']
@@ -48,6 +65,8 @@ def generate_block_header(request, node_id):
     # Get unconfirmed transactions
     transaction_list = Transaction.objects.filter(transfer_successful=False)
     last_mined_block = Block.objects.latest()
+    if not last_mined_block:
+        last_mined_block = GenesisBlock.objects.get(pk=1)
 
     # This node
     this_node = Node.objects.get(node_id=node_id)
@@ -80,3 +99,19 @@ def generate_block_header(request, node_id):
 
     return pre_block_header
 
+
+def add_new_block(request):
+    block_data = request.POST.get('block_data')
+    block = Block.objects.craete(
+        index=block_data['index'],
+        block_data_hash=block_data['block_data_hash'],
+        block_hash=block_data['block_hash'],
+        prev_block_hash=block_data['prev_block_hash'],
+        difficulty=block_data['difficulty'],
+        transactions=block_data['transactions'],
+        mined_by=block_data['mined_by'],
+        nonce=block_data['nonce'],
+        date_created=block_data['date_created']
+    )
+
+    return block  # TODO revisar API
