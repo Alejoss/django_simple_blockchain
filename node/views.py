@@ -75,6 +75,8 @@ def confirmed_transactions(request):
     for block in Block.objects.all():
         transaction_list.append(block.transactions)
 
+    # TODO cant find the transaction hash in the transactions details
+
     print("transaction_list:", transaction_list)
     return HttpResponse(transaction_list)
 
