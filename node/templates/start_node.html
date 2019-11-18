@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+
+<form action="{% url 'start_node' %}" method="post" role="form"> {% csrf_token %}
+    <div class="form-group">
+        <label for="node_id">
+            Node ID
+        </label>
+        <input class="form-control" id="node_id" name="node_id"/>
+    </div>
+    <button type="submit" class="btn btn-primary">
+        Submit
+    </button>
+</form>
+
+</body>
+</html>

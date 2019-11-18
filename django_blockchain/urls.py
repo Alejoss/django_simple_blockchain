@@ -17,23 +17,29 @@ from django.contrib import admin
 from django.urls import path
 
 from node import views as node_views
+from wallet import views as wallet_views
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('/'),
+    # path('/'),
     # path('/debug'),
-    path('/debug/reset-chain', node_views.reset_chain, name='reset_chain'),
-    # path('/blocks'),
-    # path('/blocks/index'),
-    # path('/transactions/pending'),
-    # path('/transactions/confirmed'),
-    # path('/transactions/tran_hash'),
+    path('start_node/', node_views.start_node, name='start_node'),
+    path('debug/reset_chain', node_views.reset_chain, name='reset_chain'),
+    path('wallets/', wallet_views.home, name='wallet_home'),
+    path('wallet/new/', wallet_views.new_wallet, name='new_wallet'),
+    path('wallet/<slug:address>/', wallet_views.wallet_home, name='wallet_home'),
+    path('wallet/generate_transaction/<slug:address>/', wallet_views.generate_transaction, name='generate_transaction'),
+    path('blocks/', node_views.blocks_detail, name='blocks_detail'),
+    path('blocks/<int:index>/', node_views.block_index, name='block_index'),
+    path('transactions/pending/', node_views.pending_transactions, name='pending_transactions'),
+    path('transactions/confirmed/', node_views.confirmed_transactions, name='confirmed_transactions'),
     # path('/balances'),
-    # path('/address/address/balance'),
-    # path('/transactions/send'),
-    # path('/peers/'),
+    path('address/<slug:address>/balance', node_views.address_balance, name='address_balance'),
+    path('transactions/add/', node_views.add_transaction_mempool, name='add_transaction'),
+    path('transactions/<slug:tran_hash>/', node_views.transaction_detail, name='transaction_detail'),
+    path('peers/', node_views.peers, name='peers'),  # 3
     # path('/peers/connect/'),
     # path('peers/notify-new-block'),
-    # path('/mining/get-mining-job/address'),
-    # path('/mining/submit-mined-block')
+    path('mining/get-mining-job/<slug:miner_address>/', node_views.generate_block_candidate, name='generate_block_candidate'),
+    path('mining/submit_mined_block/', node_views.add_block, name='add_block')
 ]

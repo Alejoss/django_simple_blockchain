@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Wallets</title>
+
+<link rel="stylesheet" type="text/css"
+      href="https://stackpath.bootstrapcdn.com/bootswatch/4.3.1/cerulean/bootstrap.min.css">
+</head>
+<body>
+
+<div class="col-md-4">
+    <div class="card bg-default">
+        <h5 class="card-header">
+            {{ wallet.address }}
+        </h5>
+        <div class="card-footer">
+            {{ wallet.public_key }}
+        </div>
+    </div>
+</div>
+
+<h3>Generate Transaction</h3>
+<div class="col-md-6">
+    <form action="{% url 'generate_transaction' address=wallet.address %}" method="post" role="form"> {% csrf_token %}
+        <div class="form-group">
+            <label for="destination_address">
+                Destination Address
+            </label>
+            <input class="form-control" id="destination_address" name="destination_address"/>
+        </div>
+        <div class="form-group">
+            <label for="value">
+                Value
+            </label>
+            <input class="form-control" id="value" name="value"/>
+        </div>
+        <button type="submit" class="btn btn-primary">
+            Submit
+        </button>
+    </form>
+    <div>
+</body>
+</html>

@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+
+<p>
+    {{ transaction_json }}
+</p>
+
+<form action="{% url 'add_transaction' %}" method="post" role="form">{% csrf_token %}
+    <input class="form-control" id="transaction_json" value="{{ transaction_json }}" name="transaction_json"/>
+    <button type="submit" class="btn btn-primary">
+        Send Transaction
+    </button>
+</form>
+</body>
+</html>

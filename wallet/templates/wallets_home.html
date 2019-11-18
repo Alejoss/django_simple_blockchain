@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+
+<link rel="stylesheet" type="text/css"
+      href="https://stackpath.bootstrapcdn.com/bootswatch/4.3.1/cerulean/bootstrap.min.css">
+</head>
+
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-md-12">
+            <br>
+            <br>
+                <div class="row">
+                    {% for wallet in all_wallets %}
+                        <div class="col-md-4">
+                            <div class="card bg-default">
+                                <h5 class="card-header">
+                                    <a href="{% url 'wallet_home' address=wallet.address %} ">
+                                       ADDRESS: {{ wallet.address }}
+                                    </a>
+                                </h5>
+                                <div class="card-footer">
+                                    <p>PUBLIC KEY: {{ wallet.public_key }}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        <h3>New Wallet</h3>
+            <form action="{% url 'new_wallet' %}" method="post" role="form">{% csrf_token %}
+                <div class="form-group">
+                    <label for="passphrase">
+                        Passphrase
+                    </label>
+                    <input class="form-control" name="passphrase"/>
+                </div>
+                <button type="submit" class="btn btn-primary">
+                    Submit
+                </button>
+            </form>
+        </div>
+    </div>
+</body>
+</html>
