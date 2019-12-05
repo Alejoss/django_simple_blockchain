@@ -36,7 +36,7 @@ class Wallet(models.Model):
         from_address = self.address
         to_address = destination_address
         value = value
-        fee = 1  # Hardcoded
+        fee = 1  # Hardcoded  TODO fix this
         date_created = str(datetime.utcnow().isoformat())
         data = ""
 

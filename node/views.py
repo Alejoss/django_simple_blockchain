@@ -56,7 +56,7 @@ def reset_chain(request):
         'difficulty': genesis_block.difficulty,
         'mined_by': genesis_block.mined_by,
         'nonce': genesis_block.nonce,
-        'date_created': genesis_block.date_created,
+        'date_created': genesis_block.date_created.isoformat(),
     }
 
     return HttpResponse(json.dumps({'genesis_block': genesis_block}))
@@ -252,8 +252,18 @@ def transaction_detail(request, tran_hash):
 def blocks_detail(request):
 
     block_list = []
+    genesis_block = GenesisBlock.objects.last()
+    genesis_block_data = {
+        'index': genesis_block.index,
+        'difficulty': genesis_block.difficulty,
+        'mined_by': genesis_block.mined_by,
+        'nonce': genesis_block.nonce,
+        'date_created': genesis_block.date_created.isoformat(),
+    }
+    block_list.append(genesis_block_data)
+
     for block in Block.objects.all():
-        block_list.append({
+        block_list.extend({
             'index': block.index,
             'block_hash': block.block_hash,
             'block_data_hash': block.block_data_hash,

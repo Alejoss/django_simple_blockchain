@@ -6,7 +6,7 @@ import datetime
 
 # node_id = input("node_id:")
 node_id = "AnatolAnatolNode"
-miner_address = "42f1daf0d74082b675be95ed105cbc4326fb36e5"
+miner_address = "332fc4a7113283993ae9dedfcd5ce9b33896e5b9"
 
 
 def get_block_candidate(node_id):

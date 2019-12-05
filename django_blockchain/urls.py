@@ -24,7 +24,7 @@ urlpatterns = [
     # path('/'),
     # path('/debug'),  # TODO show all blockchain info here
     path('start_node/', node_views.start_node, name='start_node'),
-    path('debug/reset_chain', node_views.reset_chain, name='reset_chain'),
+    path('debug/reset_chain/', node_views.reset_chain, name='reset_chain'),
     path('wallets/', wallet_views.home, name='wallet_home'),
     path('wallet/new/', wallet_views.new_wallet, name='new_wallet'),
     path('wallet/<slug:address>/', wallet_views.wallet_home, name='wallet_home'),
