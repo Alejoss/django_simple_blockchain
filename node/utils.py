@@ -17,6 +17,7 @@ def compare_proof_zeroes(possible_proof, num_zeroes):
 
 def serialize_transactions(transaction_list, coinbase_transaction=None):
     # receives Transaction objects, returns json
+    print("```````````````````````````serialize_transactions````````````````````````")
     serialized_list = []
     for transaction in transaction_list:
         serialized_list.append(
@@ -34,8 +35,13 @@ def serialize_transactions(transaction_list, coinbase_transaction=None):
                 'transfer_successful': transaction.transfer_successful
             }
         )
+    print("serialized_list1:")
+    print(serialized_list)
     if coinbase_transaction:
         serialized_list.append(coinbase_transaction)
+    print("serialized_list2:")
+    print(serialized_list)
+    print("```````````````````````````````````````````````````````````````````````")
     return json.dumps(serialized_list)
 
 
@@ -49,14 +55,13 @@ def generate_coinbase_transaction(miner_address, block_index):
                    "public_key": "0000000000000000000000000000000000000000",
                    "sender_signature": ["0000000000…0000", "0000000000…0000"],
                    "mined_in_block_index": str(block_index),
-                   "transfer_succesful": True
+                   "transfer_succesful": False
                    }
 
     transaction["transaction_data_hash"] = hashlib.sha256(
         (transaction["from_address"] + transaction["to_address"] + transaction["value"]
          + transaction["date_created"] + transaction["fee"] + transaction["data"] +
-         transaction["public_key"]).encode('utf-8')
-    ).hexdigest()
+         transaction["public_key"]).encode('utf-8')).hexdigest()
 
     Transaction.objects.create(
         from_address=transaction['from_address'],

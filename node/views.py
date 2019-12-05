@@ -39,17 +39,28 @@ def peers(request):
 
 def reset_chain(request):
     # Resets the chain to the Genesis block. Erases all the transactions.
-    genesis_block, created = GenesisBlock.objects.get_or_create(
-        index=0,
-        difficulty=0,
-        mined_by="000000000000000000000000000",
-        nonce=0,
-        date_created=datetime.today().isoformat()
-    )
+    all_transactions = Transaction.objects.all()
+    for transaction in all_transactions:
+        transaction.delete()
 
-    # all_transactions = Transaction.objects.all()
-    # for transaction in all_transactions:
-    #     transaction.delete()
+    genesis_block = GenesisBlock.objects.last()
+    if genesis_block:
+        genesis_block.index = 0
+        genesis_block.difficulty = 0
+        genesis_block.mined_by = "000000000000000000000000000"
+        genesis_block.nonce = 0
+        genesis_block.date_created = datetime.today()
+        genesis_block.save()
+    else:
+        GenesisBlock.objects.create(
+            index=0,
+            difficulty=0,
+            mined_by="000000000000000000000000000",
+            nonce=0,
+            date_created=datetime.today(),
+        )
+
+    Block.objects.all().delete()
 
     genesis_block = {
         'index': genesis_block.index,
@@ -57,6 +68,8 @@ def reset_chain(request):
         'mined_by': genesis_block.mined_by,
         'nonce': genesis_block.nonce,
         'date_created': genesis_block.date_created.isoformat(),
+        'block_data_hash': genesis_block.block_data_hash.hexdigest(),
+        'block_hash': genesis_block.block_hash.hexdigest()
     }
 
     return HttpResponse(json.dumps({'genesis_block': genesis_block}))
@@ -73,11 +86,12 @@ def pending_transactions(request):
 def confirmed_transactions(request):
     transaction_list = []
     for block in Block.objects.all():
-        transaction_list.append(block.transactions)
+        print("block:%s" % block.id)
+        print(block.transactions)
+        print("----------------")
+        print(json.loads(block.transactions))
+        transaction_list.extend(block.transactions)
 
-    # TODO cant find the transaction hash in the transactions details
-
-    print("transaction_list:", transaction_list)
     return HttpResponse(transaction_list)
 
 
@@ -126,14 +140,18 @@ def add_transaction_mempool(request):
 
 def generate_block_candidate(request, miner_address):
     # Get unconfirmed transactions
-    transaction_list = Transaction.objects.filter(transfer_successful=False)
+    transaction_list = Transaction.objects.filter(transfer_successful=False).exclude(from_address="0000000000000000000000000000000000000000")
     last_mined_block = Block.objects.last()
     if not last_mined_block:
         last_mined_block = GenesisBlock.objects.last()
-
+    print("-------------------------- GENERATE BLOCK CANDIDATE------------------------------")
+    print("transaction_list0:")
+    print(transaction_list)
     # add Coinbase transaction
     coinbase_transaction = generate_coinbase_transaction(miner_address, last_mined_block.index + 1)
     # TODO It is generating double coinbase transactions
+    print("coinbase_transaction:")
+    print(coinbase_transaction)
 
     merkle_tree = MerkleTools()
     for transaction in transaction_list:
@@ -141,7 +159,6 @@ def generate_block_candidate(request, miner_address):
     merkle_tree.add_leaf(coinbase_transaction['transaction_data_hash'])
 
     merkle_tree.make_tree()
-    merkle_root = ""
     if merkle_tree.is_ready:
         merkle_root = merkle_tree.get_merkle_root()
     else:
@@ -162,6 +179,11 @@ def generate_block_candidate(request, miner_address):
         'time': datetime.today().isoformat(),
     }
 
+    print("serialize return")
+    print("transaction_list:")
+    print(transaction_list)
+    print(serialize_transactions(transaction_list, coinbase_transaction))
+
     BlockCandidate.objects.create(
         index=last_mined_block.index + 1,  # if mined successfully, this will be the index
         block_data_hash=block_data_hash.hexdigest(),  # Merkle root included here
@@ -170,6 +192,7 @@ def generate_block_candidate(request, miner_address):
         transactions=serialize_transactions(transaction_list, coinbase_transaction)
     )
 
+    print("--------------------------------------------------------")
     return HttpResponse(json.dumps(pre_block_header))
 
 
@@ -182,6 +205,9 @@ def add_block(request):
     mined_by = request.POST.get('mined_by')
 
     block_candidate = BlockCandidate.objects.get(block_data_hash=block_data_hash)
+
+    print("block_candidate.transactions:")
+    print(block_candidate.transactions)
 
     # Verify the Hash / Difficulty
     true_proof = compare_proof_zeroes(block_data_hash, block_candidate.difficulty)
@@ -239,12 +265,14 @@ def address_balance(request, address):
 
 
 def transaction_detail(request, tran_hash):
-    transaction = None
+    transaction_requested = None
     for block in Block.objects.all():
         transaction = block.get_transaction(tran_hash)
+        if transaction is not None:
+            transaction_requested = transaction
 
-    if transaction:
-        return HttpResponse(transaction)
+    if transaction_requested:
+        return HttpResponse(json.dumps(transaction_requested))
     else:
         return HttpResponse("No transaction found")
 
@@ -263,13 +291,13 @@ def blocks_detail(request):
     block_list.append(genesis_block_data)
 
     for block in Block.objects.all():
-        block_list.extend({
+        block_list.append({
             'index': block.index,
             'block_hash': block.block_hash,
             'block_data_hash': block.block_data_hash,
             'prev_block_hash': block.prev_block_hash,
             'difficulty': block.difficulty,
-            'transactions': block.transactions,
+            'transactions': json.loads(block.transactions),
             'mined_by': block.mined_by,
             'nonce': block.nonce,
             'date_created': block.date_created.isoformat()
@@ -292,7 +320,7 @@ def block_index(request, index):
         'transactions': block.transactions,
         'mined_by': block.mined_by,
         'nonce': block.nonce,
-        'date_created': block.date_created
+        'date_created': block.date_created.isoformat()
     }
 
     return HttpResponse(json.dumps(block_data))

@@ -8,15 +8,12 @@ class GenesisBlock(models.Model):
     def save(self, *args, **kwargs):
         self.pk = 1
         block_data_hash = hashlib.sha256((str(self.index) + str(self.difficulty)).encode('utf-8'))
-        block_hash = hashlib.sha256((block_data_hash.hexdigest() + str(self.nonce) + self.date_created).encode('utf-8'))
+        block_hash = hashlib.sha256((block_data_hash.hexdigest() + str(self.nonce) + self.date_created.isoformat()).encode('utf-8'))
 
         self.block_data_hash = block_data_hash
         self.block_hash = block_hash
 
         super(GenesisBlock, self).save(*args, **kwargs)
-
-    def delete(self, *args, **kwargs):
-        pass
 
     index = models.IntegerField(default=0, null=True)
     difficulty = models.SmallIntegerField(default=0)
@@ -46,9 +43,12 @@ class Block(models.Model):
         return transactions_address
 
     def get_transaction(self, transaction_hash):
+
         for transaction in json.loads(self.transactions):
             if transaction['transaction_data_hash'] == transaction_hash:
                 return transaction
+
+        return None
 
 
 class BlockCandidate(models.Model):

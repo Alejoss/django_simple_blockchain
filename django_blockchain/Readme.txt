@@ -13,3 +13,4 @@ Mine a block
 Make sure the transaction is not in the memepool anymore
 Make sure the transaction is confirmed transactions/confirmed/
 Check transaction detail transactions/<slug:tran_hash>/
+Confirm the balance
