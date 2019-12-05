@@ -230,7 +230,7 @@ def add_block(request):
         transaction_mempool.save()
 
     print("BLOCK ACCEPTED!")
-    return HttpResponse("Block accepted, reward paid: %s" % 10)
+    return HttpResponse("Block accepted")
 
 
 def address_balance(request, address):
