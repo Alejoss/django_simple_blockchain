@@ -36,7 +36,7 @@ urlpatterns = [
     # path('/balances'),  # TODO loop over addresses and calculate balances. 1 loop.
     path('address/<slug:address>/balance/', node_views.address_balance, name='address_balance'),
     path('transactions/add/', node_views.add_transaction_mempool, name='add_transaction'),
-    path('transactions/<slug:tran_hash>/', node_views.transaction_detail, name='transaction_detail'),
+    path('transactions/<slug:tran_hash>/', node_views.transaction_detail, name='transaction_detail'),  # TODO all the transactions
     path('peers/', node_views.peers, name='peers'),  # TODO peer connection functionality is completely missing
     # path('/peers/connect/'),
     # path('peers/notify-new-block'),

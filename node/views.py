@@ -27,7 +27,7 @@ def start_node(request):
         return render(request, "start_node.html", {})
 
 
-def peers(request):
+def peers(request):  # TODO this!
     # shows the node data and the peers
     node = Node.objects.last()
     node_data = {
@@ -97,14 +97,10 @@ def confirmed_transactions(request):
 
 def add_transaction_mempool(request):
     # Adds a transaction to the mempool
-    print("add_transaction_mempool")
-    print(request.POST)
     transaction = json.loads(request.POST.get('transaction_json'))
     public_key_string = transaction['public_key']
     transaction_hash = transaction['transaction_data_hash']
     signature_raw = transaction['sender_signature']
-    print("signature_raw:")
-    print(signature_raw)
     signature = eth_keys.keys.Signature(vrs=signature_raw)
     new_bytes = base64.b64decode('"' + public_key_string + '"')
     public_key = eth_keys.keys.PublicKey.from_compressed_bytes(new_bytes)
@@ -116,7 +112,7 @@ def add_transaction_mempool(request):
 
     # Verify Balance
     balance = get_balance_address(transaction["from_address"])
-    if balance < int(transaction["value"]):
+    if balance < int(transaction["value"]):  # TODO and fee
         return HttpResponse("Not enough funds")
 
     if transaction_valid:
@@ -144,14 +140,8 @@ def generate_block_candidate(request, miner_address):
     last_mined_block = Block.objects.last()
     if not last_mined_block:
         last_mined_block = GenesisBlock.objects.last()
-    print("-------------------------- GENERATE BLOCK CANDIDATE------------------------------")
-    print("transaction_list0:")
-    print(transaction_list)
     # add Coinbase transaction
     coinbase_transaction = generate_coinbase_transaction(miner_address, last_mined_block.index + 1)
-    # TODO It is generating double coinbase transactions
-    print("coinbase_transaction:")
-    print(coinbase_transaction)
 
     merkle_tree = MerkleTools()
     for transaction in transaction_list:
@@ -178,11 +168,6 @@ def generate_block_candidate(request, miner_address):
         'nonce': 0,
         'time': datetime.today().isoformat(),
     }
-
-    print("serialize return")
-    print("transaction_list:")
-    print(transaction_list)
-    print(serialize_transactions(transaction_list, coinbase_transaction))
 
     BlockCandidate.objects.create(
         index=last_mined_block.index + 1,  # if mined successfully, this will be the index
