@@ -1,4 +1,4 @@
-"""django_blockchain URL Configuration
+"""blockchain_django URL Configuration
 
 The `urlpatterns` list routes URLs to views. For more information please see:
     https://docs.djangoproject.com/en/2.2/topics/http/urls/
@@ -22,7 +22,7 @@ from wallet import views as wallet_views
 urlpatterns = [
     path('admin/', admin.site.urls),
     # path('/'),
-    # path('/debug'),  # TODO show all blockchain info here
+    path('debug/', node_views.debug, name='debug'),  # TODO show all blockchain info here
     path('start_node/', node_views.start_node, name='start_node'),
     path('debug/reset_chain/', node_views.reset_chain, name='reset_chain'),
     path('wallets/', wallet_views.home, name='wallet_home'),
@@ -33,13 +33,16 @@ urlpatterns = [
     path('blocks/<int:index>/', node_views.block_index, name='block_index'),
     path('transactions/pending/', node_views.pending_transactions, name='pending_transactions'),
     path('transactions/confirmed/', node_views.confirmed_transactions, name='confirmed_transactions'),
-    # path('/balances'),  # TODO loop over addresses and calculate balances. 1 loop.
+    path('balances/', node_views.balances, name='balances'),  # TODO loop over addresses and calculate balances.
     path('address/<slug:address>/balance/', node_views.address_balance, name='address_balance'),
     path('transactions/add/', node_views.add_transaction_mempool, name='add_transaction'),
     path('transactions/<slug:tran_hash>/', node_views.transaction_detail, name='transaction_detail'),  # TODO all the transactions
-    path('peers/', node_views.peers, name='peers'),  # TODO peer connection functionality is completely missing
-    # path('/peers/connect/'),
-    # path('peers/notify-new-block'),
+    path('transactions/', node_views.all_transactions, name='all_transactions'),
+    path('peers/', node_views.peers, name='peers'),
+    path('peers/connect/', node_views.connect_peer, name='connect_peer'),
+    path('peers/sync/', node_views.sync_blockchain_peer, name='sync_peer'),
+    # path('peers/notify-new-block'), # TODO peer connection functionality is completely missing
     path('mining/get-mining-job/<slug:miner_address>/', node_views.generate_block_candidate, name='generate_block_candidate'),
-    path('mining/submit_mined_block/', node_views.add_block, name='add_block')
+    path('mining/submit_mined_block/', node_views.add_block, name='add_block'),  # The local miner submits block
+    path('node/submit_block/', node_views.add_new_block, name='add_new_block')  # other node propagates block
 ]

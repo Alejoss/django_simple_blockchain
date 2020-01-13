@@ -5,7 +5,7 @@ Create 2 Wallets (wallets/)
 Copy the address of one wallet and paste it in miner.py miner_address
 Make sure there are no blocks mined in /blocks/
 Set difficulty in settings.DIFFICULTY
-Mine a couple of blocks running miner.py in django_blockchain/
+Mine a couple of blocks running miner.py in blockchain_django/
 Check miner balance in address/<slug:address>/balance
 Send a transaction from the miner to other address
 Check the transaction in the memepool transactions/pending/

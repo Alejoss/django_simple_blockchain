@@ -15,6 +15,10 @@ def compare_proof_zeroes(possible_proof, num_zeroes):
         return False
 
 
+def concat_header_nonce(block_data_hash, date_created, nonce):
+    return hashlib.sha256((block_data_hash + date_created + str(nonce)).encode('utf-8')).hexdigest()
+
+
 def serialize_transactions(transaction_list, coinbase_transaction=None):
     # receives Transaction objects, returns json
     print("```````````````````````````serialize_transactions````````````````````````")
@@ -97,3 +101,12 @@ def get_balance_address(address):
             print(transaction["value"])
             balance += int(transaction["value"])
     return balance
+
+
+def get_all_addresses():
+    addresses = []
+    for t in Transaction.objects.all():
+        if t.from_address not in addresses:
+            addresses.append(t.from_address)
+        elif t.to_address not in addresses:
+            addresses.append(t.to_address)

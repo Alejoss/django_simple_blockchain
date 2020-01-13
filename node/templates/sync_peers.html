@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Sync Peers</title>
+</head>
+<body>
+
+    <div>
+        <h4>Peers</h4>
+        <ul>
+            {% for p in peer_data %}
+                <li>Peer Node Id: {{ p.0 }} - Peer Block Height: {{ p.1 }}</li>
+            {% endfor %}
+        </ul>
+    </div>
+    <form action="{% url 'sync_peer' %}" method="post" role="form"> {% csrf_token %}
+        <div class="form-group">
+            <select id="peer_id" name="peer_id">
+                {% for p in peer_data %}
+                    <option value="p.0">{{ p.0 }} </option>
+                {% endfor %}
+            </select>
+        </div>
+        <button type="submit" class="btn btn-primary">
+            Submit
+        </button>
+    </form>
+</body>
+</html>

@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Connect Peer</title>
+</head>
+<body>
+    <form action="{% url 'connect_peer' %}" method="post" role="form"> {% csrf_token %}
+        <div class="form-group">
+            <select id="peers" name="peers">
+                {% for p in peer_data %}
+                    <option value="p.0">{{ p.0 }} - {{ p.1 }} </option>
+                {% endfor %}
+            </select>
+        </div>
+        <button type="submit" class="btn btn-primary">
+            Submit
+        </button>
+    </form>
+</body>
+</html>

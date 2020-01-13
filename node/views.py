@@ -2,10 +2,11 @@ import base64
 import json
 import eth_keys, binascii
 import hashlib
+import requests
 from merkletools import MerkleTools
 from datetime import datetime
 
-from django.shortcuts import render
+from django.shortcuts import render, redirect, reverse
 from django.http import HttpResponse
 from django.conf import settings
 from django.views.decorators.csrf import csrf_exempt
@@ -13,8 +14,11 @@ from django.core.exceptions import ObjectDoesNotExist
 
 from transactions.models import Transaction
 from blocks.models import Block, GenesisBlock, BlockCandidate
-from node.models import Node
-from node.utils import serialize_transactions, compare_proof_zeroes, generate_coinbase_transaction, get_balance_address
+from node.models import Node, Peer
+from node.utils import serialize_transactions, compare_proof_zeroes, generate_coinbase_transaction, \
+    get_balance_address, get_all_addresses, concat_header_nonce
+
+# from blockchain_django.miner import miner_address
 
 
 def start_node(request):
@@ -27,14 +31,151 @@ def start_node(request):
         return render(request, "start_node.html", {})
 
 
-def peers(request):  # TODO this!
+def debug(request):
+    # Shows all the blockchain information
+    data = {
+        'self_url': "http://localhost:",
+        'peers': {},
+        'chain': {
+            'blocks': [],
+        },
+        'pending_transactions': [],
+        'current_difficulty': settings.DIFFICULTY,
+        'mining_jobs': "asdjkdfgsdfsdg",
+        'confirmed_balances': {}
+    }
+
+    blocks = Block.objects.all()
+    for b in blocks:
+        transactions = [t.block_hash for t in b]
+
+        data['chain']['blocks'].append({
+            'index': b.index,
+            'transactions': transactions,
+            'difficulty': b.difficulty,
+            'prevBlockHash': b.prev_block_hash,
+            'minedBy': b.mined_by,
+            'nonce': b.nonce,
+            'blockDataHash': b.block_data_hash,
+            'dateCreated': b.date_created,
+            'blockHash': b.block_hash,
+
+        })
+
+    unconfirmed_transactions = Transaction.objects.filter(transfer_successful=False)
+    for t in unconfirmed_transactions:
+        data['pending_transactions'].append({
+            'from_address': t.from_address,
+            'to_address': t.to_address,
+            'value': t.value,
+            'transaction_data_hash': t.transaction_data_hash
+        })
+
+    # confirmed balances
+    all_addresses = get_all_addresses()
+    for a in all_addresses:
+        balance = get_balance_address(a)
+        data['confirmed_balances'][a] = balance
+
+    return HttpResponse(json.dumps(data))
+
+
+def balances(request):
+    data = {}
+    all_addresses = get_all_addresses()
+    for a in all_addresses:
+        balance = get_balance_address(a)
+        data[a] = balance
+
+    return HttpResponse(json.dumps(data))
+
+
+def peers(request):
     # shows the node data and the peers
-    node = Node.objects.last()
+    this_node = Node.objects.get(id=983983983)
+    node_peers = Peer.objects.filter(related_node=this_node)
     node_data = {
-        'node_id': node.node_id,
-        'peers': node.peers
+        'node_id': this_node.node_id,
+        'node_peers': [(x.node_id, x.node_url) for x in node_peers]
     }
     return HttpResponse(json.dumps(node_data))
+
+
+def connect_peer(request):
+    # Connects to a peer given a Peer Id and a Peer Url
+    if request.method == "POST":
+        peer_id = request.POST.get("peer_id")
+        node_url = request.POST.get("node_url")
+        this_node = Node.objects.get(id=settings.NODE_ID)
+
+        Peer.objects.create(node_id=peer_id, node_url=node_url, related_node=this_node)
+        return redirect(reverse('peers'))
+    else:
+        return render(request, "connect_peer.html", {})
+
+
+def sync_blockchain_peer(request):
+    # Shows the possible peers. User may choose to sync with one that has more blocks
+    if request.method == "POST":
+        peer_id = request.POST.get("peer_id")
+        peer = Peer.objects.get(node_id=peer_id)
+        # Get block data from peer
+        block_data = requests.get(peer.node_url+"blocks/").json()
+        # Get the last block from peer, compare to local last block index
+        local_last_block = Block.objects.last()
+        peer_last_block = block_data[len(block_data)]
+        if peer_last_block['index'] > local_last_block.index:
+            # add missing blocks to local chain
+            block_diff = peer_last_block['index'] - local_last_block.index
+            extra_blocks = block_data[:block_diff]
+            counter = 0
+            for block in extra_blocks:
+                if counter == 0:
+                    # make sure the first extra block connects with the local last block hash
+                    if local_last_block.block_hash == block["prev_block_hash"]:
+                        Block.objects.create(
+                            index=peer_last_block['index'],
+                            block_data_hash=peer_last_block['block_data_hash'],
+                            block_hash=peer_last_block['block_hash'],
+                            prev_block_hash=peer_last_block['prev_block_hash'],
+                            difficulty=peer_last_block['difficulty'],
+                            transactions=peer_last_block['transactions'],
+                            mined_by=peer_last_block['mined_by'],
+                            nonce=peer_last_block['nonce'],
+                            date_created=peer_last_block['date_created']
+                        )
+                    else:
+                        return HttpResponse("Las block hashes do not correspond")
+                else:
+                    Block.objects.create(
+                        index=peer_last_block['index'],
+                        block_data_hash=peer_last_block['block_data_hash'],
+                        block_hash=peer_last_block['block_hash'],
+                        prev_block_hash=peer_last_block['prev_block_hash'],
+                        difficulty=peer_last_block['difficulty'],
+                        transactions=peer_last_block['transactions'],
+                        mined_by=peer_last_block['mined_by'],
+                        nonce=peer_last_block['nonce'],
+                        date_created=peer_last_block['date_created']
+                    )
+                    counter += 1
+
+            return HttpResponse("Blockchain Synced")
+
+        else:
+            return HttpResponse("Peer doesn't have a longer chain")
+
+    else:
+        this_node = Node.objects.get(id=settings.NODE_ID)
+        node_peers = Peer.objects.filter(related_node=this_node)
+        peer_data = []
+
+        for peer in node_peers:
+            # get blocks
+            block_data = (requests.get(peer.node_url + "blocks/")).json()
+            peer_data.append([peer.node_id, len(block_data)])
+
+        return render(request, "sync_peers.html", {'peer_data': peer_data})
 
 
 def reset_chain(request):
@@ -136,7 +277,8 @@ def add_transaction_mempool(request):
 
 def generate_block_candidate(request, miner_address):
     # Get unconfirmed transactions
-    transaction_list = Transaction.objects.filter(transfer_successful=False).exclude(from_address="0000000000000000000000000000000000000000")
+    transaction_list = Transaction.objects.filter(transfer_successful=False).exclude(
+        from_address="0000000000000000000000000000000000000000")
     last_mined_block = Block.objects.last()
     if not last_mined_block:
         last_mined_block = GenesisBlock.objects.last()
@@ -241,7 +383,99 @@ def add_block(request):
         transaction_mempool.save()
 
     print("BLOCK ACCEPTED!")
+
+    # Propagate the block
+    this_node = Node.objects.get(id=settings.NODE_ID)
+    node_peers = Peer.objects.filter(node=this_node)
+    block_data = {
+        'block_data_hash': block_data_hash,
+        'nonce': nonce,
+        'date_created': date_created,
+        'mined_by': mined_by,
+        'transactions': block_candidate.transactions,
+        'block_height': block_candidate.index
+    }
+
+    for peer in node_peers:
+        add_block_url = peer.node_url + "/node/submit_block/"
+        try:
+            requests.post(url=add_block_url, data=block_data)
+        except Exception as e:
+            print("There was an error propagating the block to %s" % peer.node_url)
+            print(e)
+
     return HttpResponse("Block accepted")
+
+
+@csrf_exempt
+def add_new_block(request):
+    # Receive a block from another node. No block candidate in local DB.
+    # Usually accumulated difficulty is calculated and compared. For simplicity, block height is used instead
+    if request.method == "POST":
+        block_data_hash = request.POST.get('block_data_hash')
+        nonce = request.POST.get('nonce')
+        date_created = request.POST.get('date_created')
+        mined_by = request.POST.get('mined_by')
+        transactions = request.POST.get('transactions')
+        block_height = request.POST.get('block_height')
+
+        print("POST DATA: ")
+        print(request.POST.data)
+
+        # Compare the block height
+        last_block = Block.objects.last()
+        if not last_block.index == int(block_height):
+            # The block height is not correct
+            return HttpResponse("Incorrect Block Height")
+
+        # Validate the nonce
+        block_hash = concat_header_nonce(block_data_hash, date_created, nonce)
+        is_true_nonce = compare_proof_zeroes(block_hash, settings.DIFFICULTY)
+        if not is_true_nonce:
+            return HttpResponse("NOT A VALID NONCE")
+
+        # Create Block
+        Block.objects.create(
+            index=block_height,
+            block_data_hash=block_data_hash,
+            block_hash=block_hash,
+            prev_block_hash=last_block.prev_block_hash,
+            difficulty=settings.DIFFICULTY,
+            transactions=transactions,
+            mined_by=mined_by,
+            nonce=nonce,
+            date_created=date_created
+        )
+
+        # Remove the transactions from the memepool
+        for transaction in json.loads(transactions):
+            print("transaction", transaction)
+            try:
+                transaction_mempool = Transaction.objects.get(
+                    transaction_data_hash=transaction['transaction_data_hash'])
+                transaction_mempool.transfer_successful = True
+                transaction_mempool.mined_in_block_index = block_height
+                transaction_mempool.save()
+            except Exception as e:
+                print(e)
+                print("There was an error removing this transaction from the memepool")
+
+        # Propagate the block
+        this_node = Node.objects.get(id=settings.NODE_ID)
+        node_peers = Peer.objects.filter(node=this_node)
+        for peer in node_peers:
+            add_block_url = peer.node_url + "/node/submit_block/"
+            block_data = request.POST.data
+
+            try:
+                requests.post(url=add_block_url, data=block_data)
+            except Exception as e:
+                print("There was an error propagating the block to %s" % peer.node_url)
+                print(e)
+
+        return HttpResponse("Block accepted")
+    else:
+        return HttpResponse("Only POST accepted")
 
 
 def address_balance(request, address):
@@ -262,8 +496,15 @@ def transaction_detail(request, tran_hash):
         return HttpResponse("No transaction found")
 
 
-def blocks_detail(request):
+def all_transactions(request):
+    transactions = []
+    for block in Block.objects.all():
+        transactions.append(block.transactions)
 
+    return HttpResponse(json.dumps(transactions))
+
+
+def blocks_detail(request):
     block_list = []
     genesis_block = GenesisBlock.objects.last()
     genesis_block_data = {

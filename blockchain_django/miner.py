@@ -4,6 +4,8 @@ import requests
 import time
 import datetime
 
+from node.utils import concat_header_nonce, compare_proof_zeroes
+
 # node_id = input("node_id:")
 node_id = "AnatolAnatolNode"
 miner_address = "332fc4a7113283993ae9dedfcd5ce9b33896e5b9"
@@ -11,19 +13,6 @@ miner_address = "332fc4a7113283993ae9dedfcd5ce9b33896e5b9"
 
 def get_block_candidate(node_id):
     return requests.get("http://127.0.0.1:8000/mining/get-mining-job/" + node_id + "/")
-
-
-def concat_header_nonce(block_data_hash, date_created, nonce):
-    return hashlib.sha256((block_data_hash + date_created + str(nonce)).encode('utf-8')).hexdigest()
-
-
-def compare_proof_zeroes(possible_proof, num_zeroes):
-    relevant_section = possible_proof[:num_zeroes]
-    print("relevant_section: ", relevant_section)
-    if relevant_section == "0" * num_zeroes:
-        return True
-    else:
-        return False
 
 
 while True:
@@ -57,5 +46,3 @@ while True:
                 print(response.text)
             time.sleep(2)
             nonce_found = True
-
-# TODO log correct values.
