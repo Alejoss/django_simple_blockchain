@@ -12,6 +12,7 @@ def home(request):
 
 
 def new_wallet(request):
+    # TODO add salt
     if request.method=="POST":
         passphrase = request.POST.get("passphrase")
         wallet = Wallet.objects.create()

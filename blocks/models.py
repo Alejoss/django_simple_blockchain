@@ -1,6 +1,8 @@
 import json
 import hashlib
+
 from django.db import models
+from django.conf import settings
 
 
 class GenesisBlock(models.Model):
@@ -17,7 +19,7 @@ class GenesisBlock(models.Model):
 
     index = models.IntegerField(default=0, null=True)
     difficulty = models.SmallIntegerField(default=0)
-    mined_by = models.CharField(default="000000000000000000000000000", max_length=150)
+    mined_by = models.CharField(default=settings.GENESIS_ADDRESS, max_length=150)
     nonce = models.IntegerField(default=0)
     block_data_hash = models.CharField(blank=True, max_length=150)  # Merkle root included here
     date_created = models.DateTimeField(null=True)

@@ -21,8 +21,9 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 
 # Node Settings
-DIFFICULTY = 3
+DIFFICULTY = 4
 NODE_ID = 983983983
+GENESIS_ADDRESS = "0000000000000000000000000000"
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = 'ub37h5@%vlnd8qda(k2k9-cq9)4ytp9b2evxh8ei-r376xdu&-'

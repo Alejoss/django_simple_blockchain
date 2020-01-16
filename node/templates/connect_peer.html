@@ -6,12 +6,17 @@
 </head>
 <body>
     <form action="{% url 'connect_peer' %}" method="post" role="form"> {% csrf_token %}
+       <div class="form-group">
+            <label for="peer_id">
+                Node ID
+            </label>
+            <input class="form-control" id="peer_id" name="peer_id"/>
+        </div>
         <div class="form-group">
-            <select id="peers" name="peers">
-                {% for p in peer_data %}
-                    <option value="p.0">{{ p.0 }} - {{ p.1 }} </option>
-                {% endfor %}
-            </select>
+            <label for="node_url">
+                Node URL
+            </label>
+            <input class="form-control" id="node_url" name="node_url"/>
         </div>
         <button type="submit" class="btn btn-primary">
             Submit

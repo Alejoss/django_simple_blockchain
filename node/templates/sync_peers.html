@@ -5,7 +5,6 @@
     <title>Sync Peers</title>
 </head>
 <body>
-
     <div>
         <h4>Peers</h4>
         <ul>
@@ -18,7 +17,7 @@
         <div class="form-group">
             <select id="peer_id" name="peer_id">
                 {% for p in peer_data %}
-                    <option value="p.0">{{ p.0 }} </option>
+                    <option value="{{p.0}}">{{ p.0 }} </option>
                 {% endfor %}
             </select>
         </div>

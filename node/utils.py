@@ -2,6 +2,8 @@ import json
 from datetime import datetime
 import hashlib
 
+from django.conf import settings
+
 from transactions.models import Transaction
 from blocks.models import Block
 
@@ -50,7 +52,7 @@ def serialize_transactions(transaction_list, coinbase_transaction=None):
 
 
 def generate_coinbase_transaction(miner_address, block_index):
-    transaction = {"from_address": "0000000000000000000000000000000000000000",
+    transaction = {"from_address": settings.GENESIS_ADDRESS,
                    "to_address": miner_address,
                    "value": str(5000350),
                    "fee": str(0),
@@ -104,9 +106,13 @@ def get_balance_address(address):
 
 
 def get_all_addresses():
-    addresses = []
-    for t in Transaction.objects.all():
-        if t.from_address not in addresses:
-            addresses.append(t.from_address)
-        elif t.to_address not in addresses:
-            addresses.append(t.to_address)
+    addresses = [settings.GENESIS_ADDRESS]
+    for b in Block.objects.all():
+        for t in json.loads(b.transactions):
+            print(t)
+            if t['from_address'] not in addresses:
+                addresses.append(t['from_address'])
+            elif t['to_address'] not in addresses:
+                addresses.append(t['to_address'])
+
+    return addresses

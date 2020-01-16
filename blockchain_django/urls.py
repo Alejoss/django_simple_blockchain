@@ -19,6 +19,7 @@ from django.urls import path
 from node import views as node_views
 from wallet import views as wallet_views
 
+
 urlpatterns = [
     path('admin/', admin.site.urls),
     # path('/'),
@@ -36,13 +37,12 @@ urlpatterns = [
     path('balances/', node_views.balances, name='balances'),  # TODO loop over addresses and calculate balances.
     path('address/<slug:address>/balance/', node_views.address_balance, name='address_balance'),
     path('transactions/add/', node_views.add_transaction_mempool, name='add_transaction'),
-    path('transactions/<slug:tran_hash>/', node_views.transaction_detail, name='transaction_detail'),  # TODO all the transactions
-    path('transactions/', node_views.all_transactions, name='all_transactions'),
+    path('transactions/<slug:tran_hash>/', node_views.transaction_detail, name='transaction_detail'),
+    path('transactions/', node_views.all_transactions, name='all_transactions'),  # TODO all the transactions
     path('peers/', node_views.peers, name='peers'),
     path('peers/connect/', node_views.connect_peer, name='connect_peer'),
     path('peers/sync/', node_views.sync_blockchain_peer, name='sync_peer'),
-    # path('peers/notify-new-block'), # TODO peer connection functionality is completely missing
+    path('peers/notify-new-block/', node_views.add_new_block, name='add_new_block'),  # TODO peer connection
     path('mining/get-mining-job/<slug:miner_address>/', node_views.generate_block_candidate, name='generate_block_candidate'),
-    path('mining/submit_mined_block/', node_views.add_block, name='add_block'),  # The local miner submits block
-    path('node/submit_block/', node_views.add_new_block, name='add_new_block')  # other node propagates block
+    path('mining/submit_mined_block/', node_views.add_block, name='add_block')  # The local miner submits block
 ]

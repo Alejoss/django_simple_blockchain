@@ -8,6 +8,6 @@ class Node(models.Model):
 
 
 class Peer(models.Model):
-    related_node = models.ForeignKey(Node, blank=True, null=True, on_delete=models.CASCADE) # local node
+    related_node = models.ForeignKey(Node, blank=True, null=True, on_delete=models.CASCADE)  # local node
     node_id = models.CharField(blank=True, max_length=150, unique=True)
     node_url = models.CharField(blank=True, max_length=150)
